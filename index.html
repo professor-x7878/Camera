@@ -1,0 +1,76 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Camera Photo Capture</title>
+  <style>
+    body {
+      background: #1e1e2f;
+      color: white;
+      text-align: center;
+      font-family: Arial;
+      padding: 40px;
+    }
+
+    #start-camera, #click-photo {
+      padding: 10px 20px;
+      margin: 10px;
+      background-color: #ff4081;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #video, #captured-image {
+      margin-top: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🎁 Click Gift to Capture Photo</h2>
+  <button id="start-camera">🎁 Open Gift</button>
+  <video id="video" autoplay playsinline></video><br>
+  <button id="click-photo" style="display:none;">📸 Capture</button>
+  <br>
+  <img id="captured-image" src="" alt="Captured Image">
+
+  <canvas id="canvas" width="640" height="480"></canvas>
+
+  <script>
+    const startCameraButton = document.getElementById('start-camera');
+    const video = document.getElementById('video');
+    const clickPhotoButton = document.getElementById('click-photo');
+    const canvas = document.getElementById('canvas');
+    const capturedImage = document.getElementById('captured-image');
+
+    startCameraButton.addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        clickPhotoButton.style.display = 'inline-block';
+      } catch (err) {
+        alert("❌ Camera permission denied or not supported");
+        console.error(err);
+      }
+    });
+
+    clickPhotoButton.addEventListener('click', () => {
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = canvas.toDataURL('image/png');
+      capturedImage.src = imageData;
+    });
+  </script>
+
+</body>
+</html>
